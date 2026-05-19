@@ -1,0 +1,26 @@
+{
+  "name": "@emu8086/shared",
+  "version": "1.0.0",
+  "description": "Shared 8086 domain constants — register names, instruction mnemonics",
+  "type": "module",
+  "main": "dist/shared.umd.cjs",
+  "module": "dist/shared.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/shared.js",
+      "require": "./dist/shared.umd.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^4.2.0"
+  }
+}
