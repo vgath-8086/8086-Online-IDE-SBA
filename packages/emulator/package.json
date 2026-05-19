@@ -1,0 +1,27 @@
+{
+  "name": "@emu8086/emulator",
+  "version": "1.0.0",
+  "description": "8086 CPU emulator — registers, memory, opcode decoder, and virtual console",
+  "type": "module",
+  "main": "dist/emulator.umd.cjs",
+  "module": "dist/emulator.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/emulator.js",
+      "require": "./dist/emulator.umd.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^4.2.0"
+  }
+}

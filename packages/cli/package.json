@@ -1,0 +1,25 @@
+{
+  "name": "@emu8086/cli",
+  "version": "1.0.0",
+  "description": "8086 emulator — interactive terminal UI demonstrating env-agnostic business logic",
+  "type": "module",
+  "bin": {
+    "emu8086": "./src/index.tsx"
+  },
+  "scripts": {
+    "start": "tsx src/index.tsx",
+    "dev": "tsx watch src/index.tsx"
+  },
+  "dependencies": {
+    "@emu8086/compiler": "workspace:*",
+    "@emu8086/emulator": "workspace:*",
+    "ink": "^5.0.1",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.0"
+  }
+}
