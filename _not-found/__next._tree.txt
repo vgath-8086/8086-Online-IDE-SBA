@@ -1,2 +1,2 @@
-:HL["/8086-Online-IDE-SBA/_next/static/chunks/03vec.hei_d8-.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"I_kazEXuxMMiDaMxYlIsR"}
+:HL["/_next/static/chunks/03vec.hei_d8-.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"DHfE3P1xtw7UurfKycf3n"}
