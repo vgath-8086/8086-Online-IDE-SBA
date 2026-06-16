@@ -10,7 +10,7 @@ const TEAM: Member[] = [
   { name: 'idrisT11', username: 'idrisT11' },
   { name: 'Gaouaoui Kamel', username: 'Scorpion197' },
   { name: 'anis77-collab', username: 'anis77-collab' },
-  { name: 'canonisensys14', username: 'canonisensys14' },
+  { name: 'bensalem14', username: 'bensalem14' },
   { name: 'yassineoo', username: 'yassineoo' },
 ];
 
