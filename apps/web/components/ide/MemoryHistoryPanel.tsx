@@ -28,26 +28,26 @@ export function MemoryHistoryPanel({ controller, tick: _tick, standalone = false
   const table = (
     <div className="overflow-auto h-full">
       {!controller
-        ? <div className="p-2 text-xs text-zinc-600">Compile to view memory history</div>
+        ? <div className="p-2 text-sm text-zinc-400">Compile to view memory history</div>
         : log.length === 0
-        ? <div className="p-2 text-xs text-zinc-600">No memory writes yet</div>
+        ? <div className="p-2 text-sm text-zinc-400">No memory writes yet</div>
         : (
-          <table className="w-full text-xs font-mono border-collapse">
+          <table className="w-full text-sm font-mono border-collapse">
             <thead className="sticky top-0 bg-zinc-900">
               <tr>
-                <th className="text-left px-2 py-0.5 text-zinc-500 font-normal">Step</th>
-                <th className="text-left px-2 py-0.5 text-zinc-500 font-normal">Address</th>
-                <th className="text-left px-2 py-0.5 text-zinc-500 font-normal">Old</th>
-                <th className="text-left px-2 py-0.5 text-zinc-500 font-normal">New</th>
+                <th className="text-left px-2 py-0.5 text-zinc-400 font-normal">Step</th>
+                <th className="text-left px-2 py-0.5 text-zinc-400 font-normal">Address</th>
+                <th className="text-left px-2 py-0.5 text-zinc-400 font-normal">Old</th>
+                <th className="text-left px-2 py-0.5 text-zinc-400 font-normal">New</th>
               </tr>
             </thead>
             <tbody>
               {log.map((e, i) => (
-                <tr key={i} className={i === 0 ? 'bg-yellow-950/30' : ''}>
-                  <td className="px-2 py-0 text-zinc-600">{e.step}</td>
-                  <td className="px-2 py-0 text-zinc-400">{e.addr.toString(16).toUpperCase().padStart(5, '0')}</td>
-                  <td className="px-2 py-0 text-zinc-500">{e.prevVal.toString(16).toUpperCase().padStart(2, '0')}</td>
-                  <td className="px-2 py-0 text-zinc-200">{e.newVal.toString(16).toUpperCase().padStart(2, '0')}</td>
+                <tr key={i} className={i === 0 ? 'bg-yellow-950/40' : ''}>
+                  <td className="px-2 py-0 text-zinc-400">{e.step}</td>
+                  <td className="px-2 py-0 text-zinc-300">{e.addr.toString(16).toUpperCase().padStart(5, '0')}</td>
+                  <td className="px-2 py-0 text-zinc-400">{e.prevVal.toString(16).toUpperCase().padStart(2, '0')}</td>
+                  <td className="px-2 py-0 text-zinc-100 font-semibold">{e.newVal.toString(16).toUpperCase().padStart(2, '0')}</td>
                 </tr>
               ))}
             </tbody>
@@ -64,7 +64,7 @@ export function MemoryHistoryPanel({ controller, tick: _tick, standalone = false
       <div className="px-2 py-1 text-xs font-semibold text-zinc-400 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between flex-shrink-0">
         <span>Memory Write History</span>
         {onExpand && (
-          <button onClick={onExpand} className="text-zinc-600 hover:text-zinc-300 rounded p-0.5 hover:bg-zinc-800" title="Expand">
+          <button onClick={onExpand} className="text-zinc-400 hover:text-zinc-100 rounded p-0.5 hover:bg-zinc-800" title="Expand">
             <Maximize2 size={11} />
           </button>
         )}

@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
 :root {
+  /* Brand green, measured directly from the logo mark (apps/web/public/logo.png):
+     hue 152, base chroma 0.145, ramped in OKLCH with chroma tapering at the extremes. */
+  --color-brand-50: oklch(0.97 0.1125 152);
+  --color-brand-100: oklch(0.94 0.1166 152);
+  --color-brand-200: oklch(0.88 0.1242 152);
+  --color-brand-300: oklch(0.80 0.1329 152);
+  --color-brand-400: oklch(0.70 0.141 152);
+  --color-brand-500: oklch(0.60 0.145 152);
+  --color-brand-600: oklch(0.50 0.141 152);
+  --color-brand-700: oklch(0.42 0.1347 152);
+  --color-brand-800: oklch(0.34 0.1265 152);
+  --color-brand-900: oklch(0.27 0.1179 152);
+  --color-brand-950: oklch(0.18 0.1052 152);
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -31,8 +45,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: var(--color-brand-500);
+  --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -42,10 +56,21 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: var(--color-brand-400);
 }
 
 @theme inline {
+  --color-brand-50: var(--color-brand-50);
+  --color-brand-100: var(--color-brand-100);
+  --color-brand-200: var(--color-brand-200);
+  --color-brand-300: var(--color-brand-300);
+  --color-brand-400: var(--color-brand-400);
+  --color-brand-500: var(--color-brand-500);
+  --color-brand-600: var(--color-brand-600);
+  --color-brand-700: var(--color-brand-700);
+  --color-brand-800: var(--color-brand-800);
+  --color-brand-900: var(--color-brand-900);
+  --color-brand-950: var(--color-brand-950);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

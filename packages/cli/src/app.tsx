@@ -7,6 +7,7 @@ import {
   CS_REG, DS_REG, ES_REG, SS_REG,
   SP_REG, BP_REG, DI_REG, SI_REG,
   FLAG_REG, IP_REG,
+  CONSOLE_COLS,
 } from '@emu8086/emulator';
 import type { CompilerResult } from '@emu8086/compiler';
 import type { NodeKeyProvider } from './node-key-provider.js';
@@ -73,7 +74,7 @@ function readRegs(ctrl: EmulatorController) {
 
 function consoleText(ctrl: EmulatorController): string {
   const chars = ctrl.processor.cnsl.getDisplayChars();
-  const cols = 80;
+  const cols = CONSOLE_COLS;
   let out = '';
   for (let i = 0; i < chars.length; i++) {
     if (i > 0 && i % cols === 0) out += '\n';

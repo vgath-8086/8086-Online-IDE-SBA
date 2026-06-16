@@ -173,7 +173,7 @@ export class EncoderContext {
     if (this.zero) { arr.push(0); arr.push(0); return arr; }
     if (num === 0) return arr;
     const disp = this.splitToBytes(num, this.signExtendFlag(tmp[z]));
-    arr = arr.concat(disp);
+    arr.push(...disp);
     if (this.justNumbers && this.signExtendFlag(tmp[z], 0) === 1) arr.push(0);
     return arr;
   }

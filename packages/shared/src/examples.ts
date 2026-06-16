@@ -935,11 +935,11 @@ mov ax, 0001h
 rcl ax, 1          ; AX = 0002h (CF=0 shifts in 0)
 
 stc                ; CF = 1
-rcl ax, 1          ; AX = 0005h (CF=1 shifts in 1)
+rcl ax, 1          ; AX = 0005h (CF=1 shifts in 1, bit 15 was 0 so new CF=0)
 
-cmc                ; CF = 0  (complement: 1→0)
+cmc                ; CF flips 0→1 (the rcl above left CF=0)
 mov bx, 0000h
-adc bx, 0000h      ; BX += 0 + CF(0) = 0
+adc bx, 0000h      ; BX = 0 + 0 + CF(1) = 0001h
 
 stc
 cmc                ; CF = 0 again (1 flipped)
@@ -1005,10 +1005,10 @@ ret`,
     id: 'int21-09',
     name: 'INT 21h — Print String (AH=09h)',
     category: 'Interrupts / I/O',
-    description: 'DOS service AH=09h: print a $-terminated string pointed to by DS:DX.',
+    description: 'DOS service AH=09h: print a $-terminated string pointed to by DS:DX. Use OFFSET to load an address — a bare variable name loads its value instead.',
     source: `org 100h
 
-mov dx, msg
+mov dx, offset msg
 mov ah, 09h
 int 21h
 
@@ -1025,7 +1025,7 @@ msg db 'Hello, World!', 0Dh, 0Ah, '$'`,
     source: `org 100h
 
 ; Prompt
-mov dx, prompt
+mov dx, offset prompt
 mov ah, 09h
 int 21h
 
@@ -1047,28 +1047,54 @@ prompt db 'Press a key: $'`,
     id: 'int21-0a',
     name: 'INT 21h — Buffered Input (AH=0Ah)',
     category: 'Interrupts / I/O',
-    description: 'DOS service AH=0Ah: read a line of input (up to N chars) into a buffer, terminated by Enter.',
+    description: 'DOS service AH=0Ah: read a line of input (up to N chars) into a buffer, terminated by Enter. This compiler only allows BX/BP/SI/DI inside [...], so address a variable by loading OFFSET into a register first.',
     source: `org 100h
 
 ; Set up input buffer: byte 0 = max chars, byte 1 = actual count (filled by INT)
-mov byte [buf+0], 10h  ; accept up to 16 chars
-mov byte [buf+1], 00h
+mov bx, offset buf
+mov byte [bx+0], 10h  ; accept up to 16 chars
+mov byte [bx+1], 00h
 
-mov dx, prompt
+mov dx, offset prompt
 mov ah, 09h
 int 21h            ; print prompt
 
-mov dx, buf
+mov dx, offset buf
 mov ah, 0Ah
-int 21h            ; read line — blocks until Enter pressed
+int 21h            ; read line — stops early on Enter, or after 16 chars
 
 ; buf+1 now has the count; buf+2 onward has the characters
-mov al, [buf+1]    ; AL = number of chars typed
+mov bx, offset buf
+mov al, [bx+1]     ; AL = number of chars actually typed (excludes Enter)
 
 ret
 
 prompt db 'Type text and press Enter: $'
 buf    db 10h, 00h, 16 dup (00h)`,
+  },
+
+  {
+    id: 'int10-09',
+    name: 'INT 10h — Write Char + Color (AH=09h)',
+    category: 'Interrupts / I/O',
+    description: 'Video service AH=09h: write the character in AL using the color in BL (low nibble = foreground).',
+    source: `org 100h
+
+mov ah, 09h    ; INT 10h AH=09h: write char + attribute
+
+mov al, 52h    ; 'R'
+mov bl, 04h    ; red
+int 10h
+
+mov al, 47h    ; 'G'
+mov bl, 02h    ; green
+int 10h
+
+mov al, 42h    ; 'B'
+mov bl, 01h    ; blue
+int 10h
+
+ret`,
   },
 ];
 
@@ -1202,6 +1228,62 @@ ret`,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PROCEDURES & MACROS
+// ─────────────────────────────────────────────────────────────────────────────
+const PROCEDURES_AND_MACROS: AsmExample[] = [
+  {
+    id: 'proc-call-ret',
+    name: 'PROC / ENDP',
+    category: 'Procedures & Macros',
+    description: 'Declare a reusable procedure with PROC/ENDP and invoke it with CALL — note PROC takes the name as its operand (PROC name), not name-first like MASM.',
+    source: `org 100h
+
+mov ax, 0003h
+call square        ; AX = AX * AX, via repeated addition
+
+; AX = 0009h confirms the call worked
+ret
+
+PROC square
+    mov bx, ax
+    mov cx, ax
+    mov ax, 0000h
+mul_loop:
+    add ax, bx
+    dec cx
+    jnz mul_loop
+    ret
+ENDP`,
+  },
+
+  {
+    id: 'macro-local',
+    name: 'MACRO / ENDM / LOCAL',
+    category: 'Procedures & Macros',
+    description: "Define a parameterised macro with MACRO/ENDM. LOCAL keeps a loop label private to each expansion, so the same macro can be invoked more than once without its labels colliding.",
+    source: `org 100h
+
+countdown 3        ; first expansion's "again" label is private to this call
+mov bx, ax         ; BX = 0003h
+
+countdown 5        ; second expansion gets its own "again" — no collision
+mov cx, ax         ; CX = 0005h
+
+ret
+
+countdown MACRO n
+LOCAL again
+    mov ax, 0000h
+    mov dx, n
+again:
+    inc ax
+    dec dx
+    jnz again
+ENDM`,
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 export const EXAMPLES: AsmExample[] = [
   ...DATA_TRANSFER,
   ...ARITHMETIC,
@@ -1212,6 +1294,7 @@ export const EXAMPLES: AsmExample[] = [
   ...FLAG_OPS,
   ...INTERRUPTS,
   ...ALGORITHMS,
+  ...PROCEDURES_AND_MACROS,
 ];
 
 export const CATEGORIES = [
@@ -1224,4 +1307,5 @@ export const CATEGORIES = [
   'Flag Operations',
   'Interrupts / I/O',
   'Algorithms',
+  'Procedures & Macros',
 ] as const;

@@ -112,7 +112,10 @@ export class CpuContext {
     return (val >> 7) === 1 ? (val | 0xFF00) : val;
   }
 
-  generateFlag(value: number, op1: number, op2: number, w: number = 1, Flag: number = 0b11111111111111): void {
+  generateFlag(
+    value: number, op1: number, op2: number, w: number = 1,
+    Flag: number = 0b11111111111111, subtractive: boolean = false,
+  ): void {
     if ((Flag & CARRY_FLAG) !== 0) {
       const mask = (w === 1) ? 0xFFFF0000 : 0xFFFFFF00;
       this.reg.setFlag('C', (value & mask) === 0 ? 0 : 1);
@@ -124,7 +127,10 @@ export class CpuContext {
     }
 
     if ((Flag & PARITY_FLAG) !== 0) {
-      this.reg.setFlag('P', value % 2);
+      // PF = 1 when the low byte of the result has an even number of set bits.
+      let bits = 0;
+      for (let i = 0; i < 8; i++) bits += (value >> i) & 1;
+      this.reg.setFlag('P', bits % 2 === 0 ? 1 : 0);
     }
 
     if ((Flag & SIGN_FLAG) !== 0) {
@@ -140,9 +146,15 @@ export class CpuContext {
       let newVal = (w === 1) ? value >> 15 : value >> 7;
       newVal &= 0x0001;
 
-      if ((w === 1) && (newVal !== (op1 >> 15)) && ((op1 >> 15) === (op2 >> 15)))
+      // Additive overflow (ADD/ADC): operands share a sign but the result doesn't.
+      // Subtractive overflow (SUB/SBB/CMP/NEG): operands have different signs and
+      // the result doesn't match the minuend (op1) — the opposite sign comparison.
+      const operandSignsMatch = (w === 1) ? (op1 >> 15) === (op2 >> 15) : (op1 >> 7) === (op2 >> 7);
+      const signCondition = subtractive ? !operandSignsMatch : operandSignsMatch;
+
+      if ((w === 1) && (newVal !== (op1 >> 15)) && signCondition)
         this.reg.setFlag('O', 1);
-      else if ((w === 0) && (newVal !== (op1 >> 7)) && ((op1 >> 7) === (op2 >> 7)))
+      else if ((w === 0) && (newVal !== (op1 >> 7)) && signCondition)
         this.reg.setFlag('O', 1);
       else
         this.reg.setFlag('O', 0);

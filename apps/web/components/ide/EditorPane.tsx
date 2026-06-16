@@ -3,6 +3,8 @@ import { useEffect, useRef, useCallback, useMemo } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { lineNumbers, highlightActiveLine, EditorView } from '@codemirror/view';
+import { Prec } from '@codemirror/state';
+import { vim } from '@replit/codemirror-vim';
 import { asm8086Language } from '@/lib/asm-language';
 import { executingLineExtension, setCurrentInstructionLine } from '@/lib/asm-highlight';
 import { breakpointGutterExtension, setBreakpointLines } from '@/lib/asm-breakpoints';
@@ -16,11 +18,13 @@ interface Props {
   breakpoints: ReadonlySet<number>;
   onBreakpointToggle(lineIdx: number): void;
   breakpointsEnabled: boolean;
+  fontSize: number;
+  vimMode: boolean;
 }
 
 export function EditorPane({
   source, onChange, currentLineIdx, onEditorReady, readOnly,
-  breakpoints, onBreakpointToggle, breakpointsEnabled,
+  breakpoints, onBreakpointToggle, breakpointsEnabled, fontSize, vimMode,
 }: Props) {
   const viewRef = useRef<EditorView | null>(null);
   // Stable refs so gutter handlers never need the extension to be re-created
@@ -63,6 +67,7 @@ export function EditorPane({
   }, []);
 
   const extensions = useMemo(() => [
+    ...(vimMode ? [Prec.highest(vim())] : []),
     asm8086Language,
     lineNumbers(),
     highlightActiveLine(),
@@ -71,11 +76,11 @@ export function EditorPane({
     EditorView.lineWrapping,
     EditorView.theme({
       '&': { height: '100%', backgroundColor: 'hsl(var(--background))' },
-      '.cm-content': { fontFamily: 'var(--font-mono, var(--font-geist-mono)), monospace', fontSize: '13px' },
+      '.cm-content': { fontFamily: 'var(--font-mono, var(--font-geist-mono)), monospace', fontSize: `${fontSize}px` },
       '.cm-gutters': { backgroundColor: '#18181b', borderRight: '1px solid #27272a' },
     }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], []);
+  ], [fontSize, vimMode]);
 
   return (
     <div className={`h-full overflow-hidden${!breakpointsEnabled ? ' [&_.cm-breakpoint-gutter]:!cursor-default [&_.cm-breakpoint-gutter]:opacity-30' : ''}`}>

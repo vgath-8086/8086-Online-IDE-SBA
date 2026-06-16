@@ -44,12 +44,12 @@ export class Registers implements IRegisters {
     }
 
     writeReg(registerId: number, value: number): void {
-        this.R[registerId] = value;
+        this.R[registerId] = value & 0xFFFF;
     }
 
     writeSegReg(registerSegId: number, value: number): void {
         const registerId = SEGMENT_REGISTERS_TABLE[registerSegId];
-        this.R[registerId] = value;
+        this.R[registerId] = value & 0xFFFF;
     }
 
     writeByteReg(registerByteId: number, value: number): void {
@@ -72,7 +72,7 @@ export class Registers implements IRegisters {
 
     writeWordReg(registerWordId: number, value: number): void {
         const registerId = WORD_REGISTERS_TABLE[registerWordId];
-        this.R[registerId] = value;
+        this.R[registerId] = value & 0xFFFF;
     }
 
     incIP(base: number): void {

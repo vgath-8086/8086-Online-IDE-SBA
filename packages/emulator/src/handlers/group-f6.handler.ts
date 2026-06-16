@@ -1,6 +1,6 @@
 /**
- * Handles all F6/F7 group instructions: NOT (reg=2), NEG (reg=3), MUL (reg=4/5), DIV (reg=6/7)
- * All share the same first opcode byte (0xF6 or 0xF7).
+ * Handles all F6/F7 group instructions: TEST (reg=0/1), NOT (reg=2), NEG (reg=3),
+ * MUL (reg=4/5), DIV (reg=6/7). All share the same first opcode byte (0xF6 or 0xF7).
  */
 import type { IInstructionHandler } from '../interfaces/i-instruction-handler.js';
 import type { CpuContext } from '../cpu/cpu-context.js';
@@ -18,7 +18,10 @@ export class GroupF6Handler implements IInstructionHandler {
     const operandes = ctx.extractOperand(ctx.ram.readByte((cs << 4) + ip + 1));
     const reg = operandes.opRegister[0];
 
-    if (reg === 0b010) {
+    if (reg === 0b000 || reg === 0b001) {
+      // TEST r/m, imm — undocumented duplicate encoding at reg=1 behaves the same as reg=0
+      this.executeTest(op, operandes, ctx);
+    } else if (reg === 0b010) {
       // NOT
       this.executeNot(op, operandes, ctx);
     } else if (reg === 0b011) {
@@ -30,6 +33,29 @@ export class GroupF6Handler implements IInstructionHandler {
     } else if (reg === 0b110 || reg === 0b111) {
       // DIV
       this.executeDiv(op, operandes, ctx);
+    }
+  }
+
+  /** TEST r/m, imm — ANDs without storing the result, sets flags only. */
+  private executeTest(op: number, operandes: ReturnType<CpuContext['extractOperand']>, ctx: CpuContext): void {
+    const ip = ctx.reg.readReg(13); // IP_REG
+    const cs = ctx.reg.readReg(4);  // CS_REG
+    const immAddr = (cs << 4) + ip + 2 + operandes.dispSize;
+
+    if (op % 2 === 1) {
+      const immVal = ctx.ram.readWord(immAddr);
+      const val = operandes.addr === null
+        ? ctx.reg.readWordReg(operandes.opRegister[1]!)
+        : ctx.ram.readWord(operandes.addr);
+      ctx.generateFlag(val & immVal, val, immVal, 1);
+      ctx.reg.incIP(operandes.dispSize + 4);
+    } else {
+      const immVal = ctx.ram.readByte(immAddr);
+      const val = operandes.addr === null
+        ? ctx.reg.readByteReg(operandes.opRegister[1]!)
+        : ctx.ram.readByte(operandes.addr);
+      ctx.generateFlag(val & immVal, val, immVal, 0);
+      ctx.reg.incIP(operandes.dispSize + 3);
     }
   }
 
@@ -52,7 +78,7 @@ export class GroupF6Handler implements IInstructionHandler {
         ctx.generateFlag(val, val, val, 1, 0xFFFF & ~OVERFLOW_FLAG);
       } else {
         const val = (~ctx.ram.readByte(operandes.addr)) & 0xFF;
-        ctx.ram.writeWord(operandes.addr, val);
+        ctx.ram.writeByte(operandes.addr, val);
         ctx.generateFlag(val, val, val, 0, 0xFFFF & ~OVERFLOW_FLAG);
       }
     }
@@ -63,19 +89,27 @@ export class GroupF6Handler implements IInstructionHandler {
     if (operandes.addr === null) {
       const R = operandes.opRegister[1]!;
       if (op % 2 === 1) {
-        const val = ((~ctx.reg.readWordReg(R)) + 1) & 0xFFFF;
+        const original = ctx.reg.readWordReg(R);
+        const val = (-original) & 0xFFFF;
         ctx.reg.writeWordReg(R, val);
+        ctx.generateFlag(-original, 0, original, 1, undefined, true);
       } else {
-        const val = ((~ctx.reg.readByteReg(R)) + 1) & 0xFF;
+        const original = ctx.reg.readByteReg(R);
+        const val = (-original) & 0xFF;
         ctx.reg.writeByteReg(R, val);
+        ctx.generateFlag(-original, 0, original, 0, undefined, true);
       }
     } else {
       if (op % 2 === 1) {
-        const val = ((~ctx.ram.readWord(operandes.addr)) + 1) & 0xFFFF;
+        const original = ctx.ram.readWord(operandes.addr);
+        const val = (-original) & 0xFFFF;
         ctx.ram.writeWord(operandes.addr, val);
+        ctx.generateFlag(-original, 0, original, 1, undefined, true);
       } else {
-        const val = ((~ctx.ram.readByte(operandes.addr)) + 1) & 0xFF;
-        ctx.ram.writeWord(operandes.addr, val);
+        const original = ctx.ram.readByte(operandes.addr);
+        const val = (-original) & 0xFF;
+        ctx.ram.writeByte(operandes.addr, val);
+        ctx.generateFlag(-original, 0, original, 0, undefined, true);
       }
     }
     ctx.reg.incIP(operandes.dispSize + (op % 2) + 1);

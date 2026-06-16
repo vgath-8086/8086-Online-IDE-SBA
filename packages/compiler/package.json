@@ -20,7 +20,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@emu8086/shared": "workspace:*"
+    "@emu8086/shared": "workspace:*",
+    "@emu8086/emulator": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

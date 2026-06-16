@@ -41,3 +41,9 @@ export const COLOR_TABLE = [
   'darkgray', 'lightblue', 'lightgreen', 'lightcyan',
   '#fffcccb', '#ff80ff', 'yellow', 'white',
 ];
+
+// Standard DOS/CGA text mode page size. getDisplayChars() returns a flat,
+// row-major array against this stride — every renderer (web canvas, CLI) must
+// wrap rows at this width, not at whatever container size happens to be.
+export const CONSOLE_COLS = 80;
+export const CONSOLE_ROWS = 25;

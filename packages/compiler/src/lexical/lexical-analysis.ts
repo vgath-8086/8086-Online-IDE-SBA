@@ -84,7 +84,11 @@ export class LexicalAnalysis {
 
   /** True if line is a variable declaration; sets variableName/variableClass state as a side effect. */
   private tryParseVariable(str: string): boolean {
-    const arr = str.toUpperCase().split(' ');
+    // Split on any run of whitespace — a literal single-space split leaves empty
+    // entries (and silently misclassifies the line) whenever the source uses
+    // more than one space, or a tab, between the name and DB/DW (e.g. for
+    // column alignment with neighbouring declarations).
+    const arr = str.toUpperCase().trim().split(/\s+/);
 
     if (arr[0] === 'DB' || arr[0] === 'DW') {
       this.lexical.expressionType = 'VAR';
@@ -119,7 +123,9 @@ export class LexicalAnalysis {
         return;
       } else if (/^"/.test(el) || /^'/.test(el)) {
         if (/(^").*("$)/.test(el) || /(^').*('$)/.test(el)) {
-          this.lexical.operands.push({ name: el.trim().toUpperCase(), type: 'STR' });
+          // Preserve the literal's original case — only the surrounding assembly
+          // syntax is case-insensitive, not string contents (e.g. 'Hello, World!').
+          this.lexical.operands.push({ name: el.trim(), type: 'STR' });
         } else {
           this.lexical.message = CompilerErrorCode.MISMATCHED_QUOTES;
           this.lexical.good    = false;
@@ -172,7 +178,9 @@ export class LexicalAnalysis {
 
   /** True if line is `NAME MACRO`; sets macro definition state. */
   private tryParseMacroDefinition(str: string): boolean {
-    const arr = str.trim().toUpperCase().split(' ');
+    // See tryParseVariable — same fix: collapse runs of whitespace instead of
+    // splitting on one literal space, or extra spaces before MACRO go undetected.
+    const arr = str.trim().toUpperCase().split(/\s+/);
     if (arr[1] !== 'MACRO') return false;
 
     if (this.isLegalName(arr[0])) {

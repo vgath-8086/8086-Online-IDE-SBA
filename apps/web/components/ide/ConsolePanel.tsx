@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { CanvasRenderer } from '@/lib/canvas-renderer';
 import { Maximize2 } from 'lucide-react';
 
@@ -12,19 +12,45 @@ interface Props {
 }
 
 export function ConsolePanel({ chars, waiting, waitingForChar, className = '', onExpand }: Props) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<CanvasRenderer | null>(null);
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    if (!rendererRef.current) {
-      rendererRef.current = new CanvasRenderer(canvasRef.current);
-    }
+  const redraw = useCallback(() => {
     const renderer = rendererRef.current;
+    if (!renderer) return;
     renderer.clear();
     chars.forEach((ch, i) => renderer.renderChar(i, ch.char, ch.fg, ch.bg));
     if (waiting) renderer.updateCursor(chars.length);
   }, [chars, waiting]);
+
+  // Always callable with the latest chars/waiting, even from the resize observer below
+  // (which is only set up once and would otherwise close over stale props).
+  const redrawRef = useRef(redraw);
+  useEffect(() => { redrawRef.current = redraw; }, [redraw]);
+
+  // Fit the canvas to its container, in actual CSS pixels, and redraw on every resize.
+  useEffect(() => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+    if (!rendererRef.current) rendererRef.current = new CanvasRenderer(canvas);
+    const renderer = rendererRef.current;
+
+    const handleResize = () => {
+      renderer.resize(container.clientWidth, container.clientHeight);
+      redrawRef.current();
+    };
+    handleResize();
+    const ro = new ResizeObserver(handleResize);
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, []);
+
+  // Redraw whenever the console content itself changes (no resize involved).
+  useEffect(() => {
+    redraw();
+  }, [redraw]);
 
   return (
     <div className={`flex flex-col border-b border-zinc-800 bg-black min-h-0 ${className}`}>
@@ -41,18 +67,14 @@ export function ConsolePanel({ chars, waiting, waitingForChar, className = '', o
           )}
         </span>
         {onExpand && (
-          <button onClick={onExpand} className="text-zinc-600 hover:text-zinc-300 rounded p-0.5 hover:bg-zinc-800/60" title="Expand">
+          <button onClick={onExpand} className="text-zinc-400 hover:text-zinc-100 rounded p-0.5 hover:bg-zinc-800/60" title="Expand">
             <Maximize2 size={11} />
           </button>
         )}
       </div>
-      <canvas
-        ref={canvasRef}
-        width={500}
-        height={200}
-        className="flex-1 min-h-0 w-full"
-        style={{ imageRendering: 'pixelated' }}
-      />
+      <div ref={containerRef} className="flex-1 min-h-0 w-full overflow-auto">
+        <canvas ref={canvasRef} className="block" style={{ imageRendering: 'pixelated' }} />
+      </div>
     </div>
   );
 }

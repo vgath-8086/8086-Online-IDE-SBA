@@ -165,4 +165,39 @@ describe('MovHandler', () => {
       expect(reg.R[AX]).toBe(0x1234);
     });
   });
+
+  // ── Regression: MOV must never touch flags ──────────────────────────────
+  // Bug: every MOV form called ctx.generateFlag(), so a MOV between a flag-set
+  // and a flag-consuming instruction (e.g. STC; MOV AX,1; RCR AX,1) silently
+  // clobbered CF/ZF/SF/PF. Real 8086 MOV touches no flags at all.
+  describe('MOV does not affect flags (regression)', () => {
+    it('reg←reg MOV leaves a pre-set carry flag untouched', () => {
+      const { ctx, reg, ram } = makeCtx();
+      reg.setFlag('C', 1);
+      ram.writeByte(1, modrm(0, 3));
+      handler.execute(MOV_RM_RM_WORD_D1, ctx);
+      expect(reg.extractFlag('C')).toBe(1);
+    });
+
+    it('MOV r/m, imm leaves a pre-set carry flag untouched', () => {
+      const { ctx, reg, ram } = makeCtx();
+      reg.setFlag('C', 1);
+      ram.writeByte(1, 0xC0);
+      ram.writeByte(2, 0x00);
+      ram.writeByte(3, 0x00); // MOV AX, 0 — would set ZF if MOV touched flags
+      handler.execute(MOV_IMM_TO_RM_WORD, ctx);
+      expect(reg.extractFlag('C')).toBe(1);
+      expect(reg.extractFlag('Z')).toBe(0);
+    });
+
+    it('MOV reg, imm16 (short form) leaves flags untouched', () => {
+      const { ctx, reg, ram } = makeCtx();
+      reg.setFlag('C', 1);
+      ram.writeByte(1, 0x00);
+      ram.writeByte(2, 0x00); // MOV AX, 0
+      handler.execute(MOV_IMM_TO_R_AX, ctx);
+      expect(reg.extractFlag('C')).toBe(1);
+      expect(reg.extractFlag('Z')).toBe(0);
+    });
+  });
 });

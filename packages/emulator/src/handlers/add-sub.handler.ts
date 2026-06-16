@@ -30,6 +30,8 @@ export class AddSubHandler implements IInstructionHandler {
     else if ((op >> 2) === (SUB_REG_MEM >> 2) || (op >> 1) === (SUB_ACC_IMM >> 1)) mode = SUB_MODE;
     else mode = SBB_MODE;
 
+    const isSubtractive = mode === SUB_MODE || mode === SBB_MODE;
+
     const isAccImm = (op >> 1) === (ADD_ACC_IMM >> 1)
       || (op >> 1) === (ADC_ACC_IMM >> 1)
       || (op >> 1) === (SUB_ACC_IMM >> 1)
@@ -41,13 +43,13 @@ export class AddSubHandler implements IInstructionHandler {
         const ax = ctx.reg.readReg(AX_REG);
         const result = ctx.executeArithmetic(mode, ax, immVal);
         ctx.reg.writeReg(AX_REG, result);
-        ctx.generateFlag(result, ax, immVal, 1);
+        ctx.generateFlag(result, ax, immVal, 1, undefined, isSubtractive);
       } else {
         const immVal = ctx.ram.readByte((cs << 4) + ip + 1);
         const al = ctx.reg.readByteReg(0);
         const result = ctx.executeArithmetic(mode, al, immVal);
         ctx.reg.writeByteReg(0, result & 0xFF);
-        ctx.generateFlag(result, al, immVal, 0);
+        ctx.generateFlag(result, al, immVal, 0, undefined, isSubtractive);
       }
       ctx.reg.incIP(op % 2 + 2);
       return;
@@ -66,7 +68,7 @@ export class AddSubHandler implements IInstructionHandler {
 
         if ((op >> 1) % 2) ctx.reg.writeWordReg(R1, result);
         else               ctx.reg.writeWordReg(R2, result);
-        ctx.generateFlag(result, dst, src, 1);
+        ctx.generateFlag(result, dst, src, 1, undefined, isSubtractive);
       } else {
         const v1 = ctx.reg.readByteReg(R1), v2 = ctx.reg.readByteReg(R2);
         const [dst, src] = (op >> 1) % 2 ? [v1, v2] : [v2, v1];
@@ -74,7 +76,7 @@ export class AddSubHandler implements IInstructionHandler {
 
         if ((op >> 1) % 2) ctx.reg.writeByteReg(R1, result & 0xFF);
         else               ctx.reg.writeByteReg(R2, result & 0xFF);
-        ctx.generateFlag(result, dst, src, 0);
+        ctx.generateFlag(result, dst, src, 0, undefined, isSubtractive);
       }
     } else {
       const R = operandes.opRegister[0], addr = operandes.addr;
@@ -86,7 +88,7 @@ export class AddSubHandler implements IInstructionHandler {
 
         if ((op >> 1) % 2) ctx.reg.writeWordReg(R, result);
         else               ctx.ram.writeWord(addr, result);
-        ctx.generateFlag(result, dst, src, 1);
+        ctx.generateFlag(result, dst, src, 1, undefined, isSubtractive);
       } else {
         const memVal = ctx.ram.readByte(addr), regVal = ctx.reg.readByteReg(R);
         const [dst, src] = (op >> 1) % 2 ? [regVal, memVal] : [memVal, regVal];
@@ -94,7 +96,7 @@ export class AddSubHandler implements IInstructionHandler {
 
         if ((op >> 1) % 2) ctx.reg.writeByteReg(R, result & 0xFF);
         else               ctx.ram.writeByte(addr, result & 0xFF);
-        ctx.generateFlag(result, dst, src, 0);
+        ctx.generateFlag(result, dst, src, 0, undefined, isSubtractive);
       }
     }
 

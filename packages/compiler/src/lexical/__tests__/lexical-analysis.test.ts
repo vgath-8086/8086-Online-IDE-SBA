@@ -90,5 +90,45 @@ describe('LexicalAnalysis', () => {
       expect(line.expressionType).toBe('VAR');
       expect(line.variableName).toBe('MYVAR'); // lexer uppercases identifiers
     });
+
+    it('parses a variable declaration with multiple spaces before DB/DW', () => {
+      // Regression: tryParseVariable used to split on a single literal space,
+      // so extra spaces (often used to column-align several declarations)
+      // produced empty array entries and the line was misread as "Illegal operands".
+      const result = lexer.analyse('buf    db 1');
+      expect(result.status).toBe(true);
+      const line = result.lexicalView[0];
+      expect(line.expressionType).toBe('VAR');
+      expect(line.variableName).toBe('BUF');
+      expect(line.variableClass).toBe('DB');
+    });
+
+    it('parses a variable declaration separated by a tab', () => {
+      const result = lexer.analyse('buf\tdb 1');
+      expect(result.status).toBe(true);
+      expect(result.lexicalView[0].variableName).toBe('BUF');
+    });
+
+    it('preserves the original case of a string literal (regression)', () => {
+      // Bug: parseVariableOperands uppercased the whole STR operand, so
+      // `msg db 'Hello, World!'` rendered as "HELLO, WORLD!" on the console.
+      // Identifiers/mnemonics are case-insensitive; string contents are not.
+      const result = lexer.analyse(`msg db 'Hello, World!'`);
+      expect(result.status).toBe(true);
+      const op = result.lexicalView[0].operands[0];
+      expect(op.type).toBe('STR');
+      expect(op.name).toBe(`'Hello, World!'`);
+    });
+  });
+
+  describe('macro definitions', () => {
+    it('parses NAME MACRO with multiple spaces before MACRO', () => {
+      // Same root cause as the DB/DW regression above, in tryParseMacroDefinition.
+      const result = lexer.analyse('countdown    MACRO n');
+      expect(result.status).toBe(true);
+      const line = result.lexicalView[0];
+      expect(line.expressionType).toBe('macro definition');
+      expect(line.instName).toBe('COUNTDOWN');
+    });
   });
 });

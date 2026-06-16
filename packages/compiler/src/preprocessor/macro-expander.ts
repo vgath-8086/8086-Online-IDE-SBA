@@ -15,6 +15,7 @@ export type MacroExpansionResult = {
  */
 export class MacroExpander {
   private macros: MacroEntry[] = [];
+  private invocationCounter = 0;
 
   expand(lexicalView: LexicalLine[]): MacroExpansionResult {
     const extract = this.extractDefinitions(lexicalView);
@@ -114,7 +115,7 @@ export class MacroExpander {
         if (lexicalView[i].operands.length !== this.macros[macroId].op.length)
           return { success: false, message: CompilerErrorCode.WRONG_MACRO_PARAMETER_COUNT, errorLine: line.index };
 
-        const expansion = this.buildExpansion(line, macroId);
+        const expansion = this.buildExpansion(line, macroId, this.invocationCounter++);
         lexicalView.splice(i, 1, ...expansion);
       }
 
@@ -127,7 +128,7 @@ export class MacroExpander {
     return { success: true, message: '', errorLine: null };
   }
 
-  private buildExpansion(line: LexicalLine, macroId: number): LexicalLine[] {
+  private buildExpansion(line: LexicalLine, macroId: number, invocationId: number): LexicalLine[] {
     const code: LexicalLine[] = [];
 
     // Lift string literals into anonymous DB variables before the macro body.
@@ -155,7 +156,7 @@ export class MacroExpander {
 
     code.push(this.makeLexicalLine(line.index, 'NULL', null, null, ['___MACRO_BEGINING'], null, null, []));
 
-    const body = this.substituteParameters(line.operands, macroId);
+    const body = this.substituteParameters(line.operands, macroId, invocationId);
     for (const bodyLine of body) {
       bodyLine.index = line.index;
       code.push(bodyLine);
@@ -183,20 +184,27 @@ export class MacroExpander {
     };
   }
 
-  private substituteParameters(operands: Operand[], macroId: number): LexicalLine[] {
+  private substituteParameters(operands: Operand[], macroId: number, invocationId: number): LexicalLine[] {
     const table = deepCopy(this.macros[macroId].innerContent);
     const labelList    = this.macros[macroId].localInstParameter;
     const paramList    = this.macros[macroId].op;
     const macroName    = this.macros[macroId].name ?? '';
 
     for (const labelEntry of labelList) {
-      const from = labelEntry.name;
-      const to   = '__LOCAL_LABEL' + macroName + from;
+      // Operand names get uppercased upstream (lexer/operand-classifier), but a bare
+      // label-definition line keeps its original-case text — compare case-insensitively
+      // (matching the convention already used for label lookups elsewhere, e.g.
+      // PreProcessor.hasLabel) or "again:" silently never matches "AGAIN" and only the
+      // jump's operand gets renamed, leaving the definition orphaned.
+      // The invocation id keeps two calls to the same macro from renaming to the same
+      // label — without it, the second call's jump resolves to the first call's body.
+      const from = labelEntry.name.toUpperCase().trim();
+      const to   = '__LOCAL_LABEL' + macroName + from + '_' + invocationId;
       for (const row of table) {
         if (Array.isArray(row.label))
-          row.label = (row.label as string[]).map(l => l === from ? to : l);
+          row.label = (row.label as string[]).map(l => l.toUpperCase().trim() === from ? to : l);
         for (const op of row.operands)
-          if (op.name === from) op.name = to;
+          if (op.name.toUpperCase().trim() === from) op.name = to;
       }
     }
 

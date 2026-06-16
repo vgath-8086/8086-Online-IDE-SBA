@@ -1,6 +1,6 @@
 import type { IInstructionHandler } from '../interfaces/i-instruction-handler.js';
 import type { CpuContext } from '../cpu/cpu-context.js';
-import { AX_REG, DX_REG } from '../constants.js';
+import { AX_REG, BX_REG, DX_REG } from '../constants.js';
 import { INT } from '../opcodes.js';
 
 export class InterruptHandler implements IInstructionHandler {
@@ -33,7 +33,22 @@ export class InterruptHandler implements IInstructionHandler {
       } else if (ah === 0x0A) {
         ctx.cnsl.readChar();
         ctx.int21_0a = true;
+        ctx.readNum = 1;
         ctx.cnsl.waitForEnter();
+      }
+    } else if (secondByte === 0x10) {
+      const ah = (ctx.reg.readReg(AX_REG) & 0xFF00) >> 8;
+
+      // AH=09h — write character and attribute. Real BIOS leaves the cursor in
+      // place; this emulator's console only ever renders up to its write
+      // cursor, so (unlike real INT 10h) writing also advances it — the same
+      // teletype-style model INT 21h's character output already uses.
+      if (ah === 0x09) {
+        const al = ctx.reg.readReg(AX_REG) & 0x00FF;
+        const bl = ctx.reg.readReg(BX_REG) & 0x00FF;
+        const fg = bl & 0x0F;
+        const bg = (bl >> 4) & 0x0F;
+        ctx.cnsl.writeChar(String.fromCharCode(al), fg, bg);
       }
     }
 

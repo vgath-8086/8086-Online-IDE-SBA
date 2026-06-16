@@ -14,7 +14,7 @@ export class MockRegisters implements IRegisters {
   readonly R = new Array<number>(14).fill(0);
 
   readReg(id: number): number               { return this.R[id] ?? 0; }
-  writeReg(id: number, value: number): void { this.R[id] = value; }
+  writeReg(id: number, value: number): void { this.R[id] = value & 0xFFFF; }
 
   readByteReg(id: number): number {
     const reg = WORD_TABLE[id % 4];
@@ -31,9 +31,9 @@ export class MockRegisters implements IRegisters {
   }
 
   readWordReg(id: number): number               { return this.R[WORD_TABLE[id]] ?? 0; }
-  writeWordReg(id: number, value: number): void { this.R[WORD_TABLE[id]] = value; }
+  writeWordReg(id: number, value: number): void { this.R[WORD_TABLE[id]] = value & 0xFFFF; }
   readSegReg(id: number): number                { return this.R[SEG_TABLE[id]] ?? 0; }
-  writeSegReg(id: number, value: number): void  { this.R[SEG_TABLE[id]] = value; }
+  writeSegReg(id: number, value: number): void  { this.R[SEG_TABLE[id]] = value & 0xFFFF; }
 
   incIP(by: number): void  { this.R[IP_REG] = (this.R[IP_REG] + by) & 0xFFFF; }
   incSP(): void            { this.R[SP_REG] = (this.R[SP_REG] - 2) & 0xFFFF; }

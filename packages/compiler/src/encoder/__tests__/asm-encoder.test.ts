@@ -81,4 +81,25 @@ describe('assembleInstruction', () => {
       expect(result[0]).toBe(0xEB);
     });
   });
+
+  describe('memory operand with non-zero disp8 + immediate (regression)', () => {
+    // Bug: appendDisplacementBytes() used `arr = arr.concat(disp)`, which rebinds
+    // the local variable instead of mutating the array the caller holds. Any
+    // encoder that calls it without using the return value (MOV/ADD/AND/etc.
+    // immediate-to-memory forms) silently dropped the displacement byte whenever
+    // it was non-zero, desyncing every instruction after it.
+    it('MOV BYTE [BX+1],0 → [0xC6, 0x47, 0x01, 0x00] (disp8 byte must survive)', () => {
+      expect(assembleInstruction('MOV BYTE [BX+1],0')).toEqual([0xC6, 0x47, 0x01, 0x00]);
+    });
+
+    it('ADD BYTE [BX+1],5 → [0x80, 0x47, 0x01, 0x05]', () => {
+      // 0x80 = arith imm8 r/m8; ModRM 0x47 = mod=01 reg=000(ADD) rm=111(BX); disp8=1; imm8=5
+      expect(assembleInstruction('ADD BYTE [BX+1],5')).toEqual([0x80, 0x47, 0x01, 0x05]);
+    });
+
+    it('AND BYTE [BX+2],0FFh → [0x80, 0x67, 0x02, 0xFF]', () => {
+      // ModRM 0x67 = mod=01 reg=100(AND) rm=111(BX); disp8=2
+      expect(assembleInstruction('AND BYTE [BX+2],0FFh')).toEqual([0x80, 0x67, 0x02, 0xFF]);
+    });
+  });
 });

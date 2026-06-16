@@ -4,3 +4,5 @@ export * from './result.js';
 export * from './flow-instructions.js';
 export * from './ops-combinations.js';
 export * from './register-map.js';
+export * from './vfs.js';
+export * from './examples.js';

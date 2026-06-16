@@ -2,10 +2,10 @@
 
 import { useState, useCallback, useRef, type DragEvent } from 'react';
 import { X, FolderOpen, ChevronRight } from 'lucide-react';
-import { EXAMPLES, CATEGORIES, type AsmExample } from '@/lib/examples';
+import { EXAMPLES, CATEGORIES, type AsmExample } from '@emu8086/shared';
 
 interface Props {
-  onLoad(source: string): void;
+  onLoad(source: string, suggestedName: string): void;
   onClose(): void;
 }
 
@@ -45,7 +45,7 @@ function tokenise(line: string): Array<{ text: string; cls: string }> {
     else if (/^\w/.test(t) && code.includes(t + ':')) cls = 'text-violet-400'; // label def
     tokens.push({ text: t, cls });
   }
-  if (comment) tokens.push({ text: comment, cls: 'text-zinc-500 italic' });
+  if (comment) tokens.push({ text: comment, cls: 'text-zinc-400 italic' });
   return tokens;
 }
 
@@ -106,8 +106,11 @@ export function ImportModal({ onLoad, onClose }: Props) {
   }, [readFile]);
 
   const handleLoad = useCallback(() => {
-    if (previewSource) { onLoad(previewSource); onClose(); }
-  }, [previewSource, onLoad, onClose]);
+    if (!previewSource) return;
+    const suggestedName = fileName?.replace(/\.(asm|s|txt)$/i, '') ?? selectedExample?.name ?? 'untitled';
+    onLoad(previewSource, suggestedName);
+    onClose();
+  }, [previewSource, fileName, selectedExample, onLoad, onClose]);
 
   // Close on backdrop click
   const handleBackdrop = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -124,7 +127,7 @@ export function ImportModal({ onLoad, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 flex-shrink-0">
           <span className="font-semibold text-zinc-100">Load Program</span>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-100 rounded p-1 hover:bg-zinc-800">
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-100 rounded p-1 hover:bg-zinc-800">
             <X size={15} />
           </button>
         </div>
@@ -165,7 +168,7 @@ export function ImportModal({ onLoad, onClose }: Props) {
                 ].join(' ')}
               >
                 <div className="text-xs font-medium leading-tight">{ex.name}</div>
-                <div className="text-[10px] text-zinc-500 mt-0.5 leading-tight line-clamp-2">{ex.description}</div>
+                <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight line-clamp-2">{ex.description}</div>
               </button>
             ))}
           </div>
@@ -178,7 +181,7 @@ export function ImportModal({ onLoad, onClose }: Props) {
               {previewSource
                 ? <SourcePreview source={previewSource} />
                 : (
-                  <div className="h-full flex items-center justify-center text-zinc-600 text-sm">
+                  <div className="h-full flex items-center justify-center text-zinc-400 text-sm">
                     Select an example to preview its source
                   </div>
                 )
@@ -187,7 +190,7 @@ export function ImportModal({ onLoad, onClose }: Props) {
 
             {/* File import zone */}
             <div className="flex-shrink-0 border-t border-zinc-800 p-3">
-              <p className="text-[10px] text-zinc-500 mb-2 uppercase tracking-wide">Or import a local file</p>
+              <p className="text-[10px] text-zinc-400 mb-2 uppercase tracking-wide">Or import a local file</p>
               <div
                 onDragOver={e => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
@@ -196,10 +199,10 @@ export function ImportModal({ onLoad, onClose }: Props) {
                 className={[
                   'flex items-center gap-2 px-3 py-2.5 rounded border border-dashed cursor-pointer transition-colors',
                   dragging
-                    ? 'border-blue-500 bg-blue-900/20 text-blue-300'
+                    ? 'border-brand-500 bg-brand-900/20 text-brand-300'
                     : fileName
                     ? 'border-green-700 bg-green-900/20 text-green-400'
-                    : 'border-zinc-700 hover:border-zinc-500 text-zinc-500 hover:text-zinc-300',
+                    : 'border-zinc-700 hover:border-zinc-500 text-zinc-400 hover:text-zinc-200',
                 ].join(' ')}
               >
                 <FolderOpen size={14} className="flex-shrink-0" />
@@ -220,7 +223,7 @@ export function ImportModal({ onLoad, onClose }: Props) {
 
         {/* Footer */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800 flex-shrink-0 bg-zinc-950">
-          <span className="text-xs text-zinc-600">
+          <span className="text-xs text-zinc-400">
             {selectedExample && !fileSource && `${selectedExample.category} — ${selectedExample.name}`}
             {fileSource && fileName && `Local file: ${fileName}`}
           </span>
@@ -234,7 +237,7 @@ export function ImportModal({ onLoad, onClose }: Props) {
             <button
               onClick={handleLoad}
               disabled={!canLoad}
-              className="px-4 py-1.5 text-xs rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 disabled:cursor-not-allowed font-medium"
+              className="px-4 py-1.5 text-xs rounded bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-40 disabled:cursor-not-allowed font-medium"
             >
               Load →
             </button>

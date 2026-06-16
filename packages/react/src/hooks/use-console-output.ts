@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { CONSOLE_COLS } from '@emu8086/emulator';
 import type { EmulatorController } from '@emu8086/emulator';
 
 export function useConsoleOutput(controller: EmulatorController | null, tick: number) {
@@ -12,7 +13,7 @@ export function useConsoleOutput(controller: EmulatorController | null, tick: nu
       };
     }
     const chars = controller.processor.cnsl.getDisplayChars();
-    const cols = 80;
+    const cols = CONSOLE_COLS;
     let raw = '';
     for (let i = 0; i < chars.length; i++) {
       if (i > 0 && i % cols === 0) raw += '\n';

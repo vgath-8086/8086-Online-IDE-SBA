@@ -130,13 +130,13 @@ export class StringHandler implements IInstructionHandler {
 
     if (op % 2) {
       const valB = ctx.ram.readWord(ea1), valA = ctx.ram.readWord(ea2);
-      ctx.generateFlag(valA - valB, valA, valB, 1);
+      ctx.generateFlag(valA - valB, valA, valB, 1, undefined, true);
       const inc = ctx.reg.extractFlag('D') ? -2 : 2;
       ctx.reg.writeReg(DI_REG, di + inc);
       ctx.reg.writeReg(SI_REG, si + inc);
     } else {
       const valB = ctx.ram.readByte(ea1), valA = ctx.ram.readByte(ea2);
-      ctx.generateFlag(valA - valB, valA, valB, 0);
+      ctx.generateFlag(valA - valB, valA, valB, 0, undefined, true);
       const inc = ctx.reg.extractFlag('D') ? -1 : 1;
       ctx.reg.writeReg(DI_REG, di + inc);
       ctx.reg.writeReg(SI_REG, si + inc);
@@ -152,11 +152,11 @@ export class StringHandler implements IInstructionHandler {
 
     if (op % 2) {
       const valB = ctx.ram.readWord(ea1), valA = ctx.reg.readReg(AX_REG);
-      ctx.generateFlag(valA - valB, valA, valB, 1);
+      ctx.generateFlag(valA - valB, valA, valB, 1, undefined, true);
       ctx.reg.writeReg(DI_REG, di + (ctx.reg.extractFlag('D') ? -2 : 2));
     } else {
       const valB = ctx.ram.readByte(ea1), valA = ctx.reg.readByteReg(0); // AL
-      ctx.generateFlag(valA - valB, valA, valB, 0);
+      ctx.generateFlag(valA - valB, valA, valB, 0, undefined, true);
       ctx.reg.writeReg(DI_REG, di + (ctx.reg.extractFlag('D') ? -1 : 1));
     }
 

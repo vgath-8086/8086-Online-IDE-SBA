@@ -1,0 +1,16 @@
+{
+  "name": "@emu8086/feature-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Feature tests that wire the compiler and emulator together — one example from packages/shared/src/examples.ts per test",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@emu8086/shared": "workspace:*",
+    "@emu8086/compiler": "workspace:*",
+    "@emu8086/emulator": "workspace:*",
+    "typescript": "^5.5.0"
+  }
+}

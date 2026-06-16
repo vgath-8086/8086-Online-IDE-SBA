@@ -49,18 +49,28 @@ export class Processor {
       ctx.int21_01 = false;
       cnsl.keyReady = false;
     }
-    if (ctx.int21_0a && cnsl.keyReady && ctx.readNum <= this.RAM.readByte(this.register.readReg(DX_REG))) {
-      const dxAdr = this.register.readReg(DX_REG);
-      if (ctx.readNum === this.RAM.readByte(dxAdr) - 1) {
-        this.RAM.writeByte(dxAdr + ctx.readNum + 1, cnsl.key!.charCodeAt(0) & 0x00FF);
-        this.RAM.writeByte(dxAdr + 2 + ctx.readNum, 0x0D);
-        this.RAM.writeByte(dxAdr + 2 + ctx.readNum + 1, 0);
-        this.RAM.writeByte(dxAdr + 1, ctx.readNum);
-      } else {
-        this.RAM.writeByte(dxAdr + ctx.readNum + 1, cnsl.key!.charCodeAt(0) & 0x00FF);
-        cnsl.keyReady = false;
-        cnsl.readChar();
-        ctx.readNum++;
+    if (ctx.int21_0a && cnsl.keyReady) {
+      const dxAdr     = this.register.readReg(DX_REG);
+      const maxChars  = this.RAM.readByte(dxAdr);
+      if (ctx.readNum <= maxChars) {
+        const keyCode  = cnsl.key!.charCodeAt(0) & 0x00FF;
+        const isEnter  = keyCode === 0x0D;
+        const isAtMax  = ctx.readNum === maxChars;
+
+        if (isEnter || isAtMax) {
+          if (!isEnter) this.RAM.writeByte(dxAdr + ctx.readNum + 1, keyCode);
+          const charsRead = isEnter ? ctx.readNum - 1 : ctx.readNum;
+          this.RAM.writeByte(dxAdr + 2 + charsRead, 0x0D);
+          this.RAM.writeByte(dxAdr + 2 + charsRead + 1, 0);
+          this.RAM.writeByte(dxAdr + 1, charsRead);
+          cnsl.keyReady = false;
+          ctx.int21_0a = false;
+        } else {
+          this.RAM.writeByte(dxAdr + ctx.readNum + 1, keyCode);
+          cnsl.keyReady = false;
+          cnsl.readChar();
+          ctx.readNum++;
+        }
       }
     }
   }

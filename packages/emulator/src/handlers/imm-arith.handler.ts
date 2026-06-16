@@ -18,6 +18,7 @@ export class ImmArithHandler implements IInstructionHandler {
     const operandes = ctx.extractOperand(ctx.ram.readByte((cs << 4) + ip + 1));
     const mode = MODES[operandes.opRegister[0]];
     const isCmp = operandes.opRegister[0] === 0b111;
+    const isSubtractive = mode === SUB_MODE || mode === SBB_MODE || mode === CMP_MODE;
 
     // Immediate value address: 2 bytes into instruction + displacement
     const immAddr = (cs << 4) + ip + 2 + operandes.dispSize;
@@ -31,12 +32,12 @@ export class ImmArithHandler implements IInstructionHandler {
         const regVal = ctx.reg.readWordReg(R);
         const result = ctx.executeArithmetic(mode, regVal, immVal);
         if (!isCmp) ctx.reg.writeWordReg(R, result);
-        ctx.generateFlag(result, regVal, immVal, 1);
+        ctx.generateFlag(result, regVal, immVal, 1, undefined, isSubtractive);
       } else {
         const memVal = ctx.ram.readWord(operandes.addr);
         const result = ctx.executeArithmetic(mode, memVal, immVal);
         if (!isCmp) ctx.ram.writeWord(operandes.addr, result);
-        ctx.generateFlag(result, memVal, immVal, 1);
+        ctx.generateFlag(result, memVal, immVal, 1, undefined, isSubtractive);
       }
 
       ctx.reg.incIP(operandes.dispSize + 2 + 2);
@@ -49,12 +50,12 @@ export class ImmArithHandler implements IInstructionHandler {
         const regVal = ctx.reg.readByteReg(R);
         const result = ctx.executeArithmetic(mode, regVal, immVal);
         if (!isCmp) ctx.reg.writeByteReg(R, result & 0xFF);
-        ctx.generateFlag(result, regVal, immVal, 0);
+        ctx.generateFlag(result, regVal, immVal, 0, undefined, isSubtractive);
       } else {
         const memVal = ctx.ram.readByte(operandes.addr);
         const result = ctx.executeArithmetic(mode, memVal, immVal);
         if (!isCmp) ctx.ram.writeByte(operandes.addr, result & 0xFF);
-        ctx.generateFlag(result, memVal, immVal, 0);
+        ctx.generateFlag(result, memVal, immVal, 0, undefined, isSubtractive);
       }
 
       ctx.reg.incIP(operandes.dispSize + 3);

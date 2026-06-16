@@ -49,7 +49,7 @@ apps/
 | Control flow | `JMP`, `CALL`, `RET`, `Jcc` (JE/JNE/JG/JGE/JL/JLE/JA/JAE/JB/JBE/JS/JNS/JO/JNO/JP/JNP/JCXZ), `LOOP` |
 | String | `MOVSB`, `MOVSW`, `LODSB`, `LODSW`, `STOSB`, `STOSW`, `CMPSB`, `CMPSW`, `SCASB`, `SCASW`, `REP`, `REPE`, `REPNE` |
 | Flags | `CLC`, `STC`, `CMC`, `CLD`, `STD` |
-| Interrupt | `INT` (10h video / 21h DOS-style I/O) |
+| Interrupt | `INT` (10h AH=09h write char+color / 21h AH=01h,02h,09h,0Ah DOS-style I/O) |
 | Segment override | `CS:`, `DS:`, `ES:`, `SS:` prefixes |
 
 ---
@@ -76,7 +76,8 @@ ret             ; exit (pops 0xFFFE from stack → execution ends)
 **Literals:** decimal (`42`), hex with `h` suffix (`0FFh`, `1234h`), binary with `b` suffix (`1010b`).  
 **Data:** `DB` (byte), `DW` (word), `DUP` for arrays.  
 **Labels:** any identifier followed by `:`.  
-**Macros:** `MACRO` / `ENDM`.
+**Macros:** `MACRO` / `ENDM`, with `LOCAL` to keep a label private per expansion.  
+**Procedures:** `PROC` / `ENDP` — mnemonic-first (`PROC name`), invoked with `CALL name`.
 
 ---
 

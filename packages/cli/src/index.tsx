@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 import { render } from 'ink';
 import { createCompiler } from '@emu8086/compiler';
 import type { CompilerResult } from '@emu8086/compiler';
 import { EmulatorController } from '@emu8086/emulator';
 import type { LoadableProgram } from '@emu8086/emulator';
 import { NodeKeyProvider } from './node-key-provider.js';
+import { NodeVfs } from './node-vfs.js';
 import { App } from './app.js';
 
 type FinalViewLine = NonNullable<CompilerResult['finalView']>[number];
@@ -17,6 +18,17 @@ if (!asmPath) {
 }
 
 const source = readFileSync(resolve(process.cwd(), asmPath), 'utf-8');
+
+// Sync this run into the shared virtual file system (~/.emu8086/files/) so it
+// shows up in the web IDE too — same VirtualFileSystem port, node:fs-backed here.
+void (async () => {
+  const vfs = new NodeVfs();
+  const name = basename(asmPath);
+  const existing = (await vfs.list()).find(f => f.name === name);
+  if (existing) await vfs.write(existing.id, source);
+  else await vfs.create(name, source);
+})();
+
 const result = createCompiler().compile(source);
 
 if (!result.status || !result.finalView || result.origin === null) {

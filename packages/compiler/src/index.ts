@@ -12,6 +12,7 @@ export { Linkage, generateVariable, reformInstruction } from './linker/index.js'
 export { assembleInstruction, createEncoder }       from './encoder/asm-encoder.js';
 export type { CompilerResult }                     from './types.js';
 export { CompilerErrorCode }                       from './error-codes.js';
+export { toLoadableProgram }                       from './to-loadable-program.js';
 
 export function createCompiler(): CompilerPipeline {
   return createPipeline(createLexer())
