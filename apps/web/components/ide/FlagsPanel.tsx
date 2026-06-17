@@ -1,5 +1,4 @@
 'use client';
-import { useRef } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -44,45 +43,48 @@ const FLAG_BITS: FlagBit[] = [
 
 interface Props {
   flagsHex: string;
-  expanded?: boolean;   // wider layout when shown in a modal
+  prevFlagsHex?: string;
+  expanded?: boolean;
   onExpand?: () => void;
 }
 
 function FlagCardExpanded({ flag, set, changed }: { flag: FlagBit; set: boolean; changed: boolean }) {
   return (
-    <div className={`rounded-lg p-3 ${changed ? 'bg-yellow-950/30 border border-yellow-900/50' : 'bg-zinc-800/60 border border-zinc-800'}`}>
-      <div className="flex items-baseline justify-between mb-1">
-        <span className="text-sm font-bold text-zinc-200">{flag.name}</span>
-        <span className={`font-mono text-lg tabular-nums rounded px-2 font-bold ${
+    <div
+      className={`rounded-lg p-3 border transition-colors bg-zinc-900/40 ${
+        changed ? 'border-amber-500/50 shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)]' : 'border-zinc-800'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-bold text-zinc-400">{flag.name}</span>
+        <span className={`font-mono text-lg tabular-nums px-3 rounded-md transition-colors ${
           set
-            ? changed ? 'text-yellow-200 bg-yellow-800/60' : 'text-green-400 bg-green-900/40'
-            : changed ? 'text-yellow-500 bg-yellow-900/30' : 'text-zinc-400 bg-zinc-700/50'
+            ? changed ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-green-400 bg-green-950/50 border border-green-900/30'
+            : changed ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-500 bg-zinc-800/50'
         }`}>
           {set ? '1' : '0'}
         </span>
       </div>
-      <div className="text-xs font-medium text-zinc-300 mb-2">{flag.fullName}</div>
-      <div className="text-[11px] text-zinc-200 leading-snug mb-2">{set ? flag.whenSet : flag.whenClear}</div>
-      <div className="text-[10px] text-zinc-500 leading-snug">
-        {set ? `If 0: ${flag.whenClear}` : `If 1: ${flag.whenSet}`}
+      <div className="text-xs font-semibold text-zinc-200 mb-1">{flag.fullName}</div>
+      <div className="text-[11px] text-zinc-400 leading-snug mb-2 line-clamp-2 h-8">{set ? flag.whenSet : flag.whenClear}</div>
+      <div className="text-[10px] text-zinc-500 italic border-t border-zinc-800/50 pt-2">
+        {set ? `Clear: ${flag.whenClear}` : `Set: ${flag.whenSet}`}
       </div>
     </div>
   );
 }
 
-export function FlagsPanel({ flagsHex, expanded = false, onExpand }: Props) {
-  const prevRef = useRef<number | null>(null);
+export function FlagsPanel({ flagsHex, prevFlagsHex, expanded = false, onExpand }: Props) {
   const val = parseInt(flagsHex, 16) || 0;
-  const prev = prevRef.current ?? val;
-  prevRef.current = val;
+  const prevVal = prevFlagsHex !== undefined ? (parseInt(prevFlagsHex, 16) || 0) : val;
 
   if (expanded) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-zinc-950">
         {FLAG_BITS.map(flag => {
           const set = !!((val >> flag.bit) & 1);
-          const wasSet = !!((prev >> flag.bit) & 1);
-          return <FlagCardExpanded key={flag.name} flag={flag} set={set} changed={set !== wasSet} />;
+          const wasSet = !!((prevVal >> flag.bit) & 1);
+          return <FlagCardExpanded key={flag.name} flag={flag} set={set} changed={prevFlagsHex !== undefined && set !== wasSet} />;
         })}
       </div>
     );
@@ -99,25 +101,26 @@ export function FlagsPanel({ flagsHex, expanded = false, onExpand }: Props) {
         )}
       </div>
       <div className="flex flex-wrap gap-1.5 px-2 py-2">
-        {FLAG_BITS.map(({ name, bit, desc, whenSet, whenClear }) => {
+        {FLAG_BITS.map((flag) => {
+          const { name, bit, desc, whenSet, whenClear } = flag;
           const set = (val >> bit) & 1;
-          const wasSet = (prev >> bit) & 1;
-          const changed = set !== wasSet;
+          const wasSet = (prevVal >> bit) & 1;
+          const changed = prevFlagsHex !== undefined && set !== wasSet;
           return (
             <Tooltip key={name}>
               <TooltipTrigger
-                render={
-                  <div className={`flex items-center gap-1.5 rounded-md px-1.5 py-1 cursor-default ${changed ? 'bg-yellow-950/40' : 'bg-zinc-800/60'}`} />
-                }
+                className={`flex items-center gap-1.5 rounded-md px-1.5 py-1 cursor-default transition-colors ${
+                  changed ? 'bg-yellow-400 text-zinc-950' : 'bg-zinc-800/60'
+                }`}
               >
-                <span className={`font-mono text-xs tabular-nums rounded px-1.5 py-0.5 font-bold ${
+                <span className={`font-mono text-xs tabular-nums rounded px-1.5 py-0.5 font-bold transition-colors ${
                   set
-                    ? changed ? 'text-yellow-200 bg-yellow-800/60' : 'text-green-400 bg-green-900/40'
-                    : changed ? 'text-yellow-500 bg-yellow-900/30' : 'text-zinc-400 bg-zinc-700/50'
+                    ? changed ? 'text-zinc-900 bg-yellow-200' : 'text-green-400 bg-green-950/50 border border-green-900/30'
+                    : changed ? 'text-zinc-900 bg-yellow-500' : 'text-zinc-500 bg-zinc-800/50'
                 }`}>
                   {set ? '1' : '0'}
                 </span>
-                <span className="text-zinc-300 text-[11px] font-medium">{name}</span>
+                <span className={`text-[11px] font-medium transition-colors ${changed ? 'text-zinc-900 font-bold' : 'text-zinc-300'}`}>{name}</span>
               </TooltipTrigger>
               <TooltipContent>{name} ({desc}) — {set ? whenSet : whenClear}</TooltipContent>
             </Tooltip>

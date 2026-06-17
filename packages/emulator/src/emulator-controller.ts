@@ -77,6 +77,10 @@ export class EmulatorController {
   get compiled(): boolean { return this._compiled; }
   get breakpoints(): ReadonlySet<number> { return this._breakpoints; }
 
+  getRegStateAt(t: number): RegState | undefined {
+    return this._regStatesManager[t];
+  }
+
   addBreakpoint(physicalAddr: number): void    { this._breakpoints.add(physicalAddr); }
   removeBreakpoint(physicalAddr: number): void { this._breakpoints.delete(physicalAddr); }
   clearBreakpoints(): void                     { this._breakpoints.clear(); }

@@ -1,5 +1,4 @@
 'use client';
-import { useRef } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -12,6 +11,7 @@ type Regs = {
 
 interface Props {
   regs: Regs;
+  prev?: Regs;
   className?: string;
   expanded?: boolean;
   onExpand?: () => void;
@@ -38,15 +38,17 @@ function toSigned16(n: number): number {
   return n >= 0x8000 ? n - 0x10000 : n;
 }
 
-function RegCell({ label, value, prev }: { label: string; value: string; prev: string }) {
-  const changed = value !== prev && prev !== '';
+function RegCell({ label, value, prev }: { label: string; value: string; prev?: string }) {
+  const changed = prev !== undefined && value !== prev;
   return (
     <Tooltip>
       <TooltipTrigger
-        render={<div className={`flex items-center gap-1.5 px-2 py-1 m-0.5 rounded-md cursor-default ${changed ? 'bg-yellow-950/40' : 'bg-zinc-800/60'}`} />}
+        className={`flex items-center gap-1.5 px-2 py-1 m-0.5 rounded-md cursor-default transition-colors ${
+          changed ? 'bg-yellow-400 text-zinc-950 font-bold' : 'bg-zinc-800/60 text-zinc-100'
+        }`}
       >
-        <span className="text-zinc-400 text-sm font-medium w-5 text-right">{label}</span>
-        <span className={`font-mono text-sm tabular-nums ${changed ? 'text-yellow-300 font-semibold' : 'text-zinc-100'}`}>
+        <span className={`text-sm font-medium w-5 text-right ${changed ? 'text-zinc-800' : 'text-zinc-400'}`}>{label}</span>
+        <span className="font-mono text-sm tabular-nums">
           {value}
         </span>
       </TooltipTrigger>
@@ -55,31 +57,41 @@ function RegCell({ label, value, prev }: { label: string; value: string; prev: s
   );
 }
 
-function RegCardExpanded({ label, value, prev }: { label: string; value: string; prev: string }) {
-  const changed = value !== prev && prev !== '';
+function RegCardExpanded({ label, value, prev }: { label: string; value: string; prev?: string }) {
+  const changed = prev !== undefined && value !== prev;
   const info = REGISTER_INFO[label];
   const num = parseInt(value, 16) || 0;
   return (
-    <div className={`rounded-lg p-3 ${changed ? 'bg-yellow-950/30 border border-yellow-900/50' : 'bg-zinc-800/60 border border-zinc-800'}`}>
-      <div className="flex items-baseline justify-between mb-1">
-        <span className="text-sm font-bold text-zinc-200">{label}</span>
-        <span className={`font-mono text-lg tabular-nums ${changed ? 'text-yellow-300 font-semibold' : 'text-zinc-100'}`}>{value}h</span>
+    <div
+      className={`rounded-lg p-3 border transition-colors bg-zinc-900/40 ${
+        changed ? 'border-amber-500/50 shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)]' : 'border-zinc-800'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-bold text-zinc-400">{label}</span>
+        <span className={`font-mono text-lg tabular-nums px-2 rounded-md transition-colors ${
+          changed ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-100 bg-zinc-800/50'
+        }`}>
+          {value}h
+        </span>
       </div>
-      <div className="text-xs font-medium text-zinc-300 mb-1">{info?.fullName}</div>
-      <div className="text-[11px] text-zinc-400 leading-snug mb-2">{info?.desc}</div>
-      <div className="flex gap-3 text-[11px] text-zinc-500 font-mono">
-        <span>dec {num}</span>
-        <span>signed {toSigned16(num)}</span>
+      <div className="text-xs font-semibold text-zinc-200 mb-1">{info?.fullName}</div>
+      <div className="text-[11px] text-zinc-400 leading-snug mb-3 line-clamp-2 h-8">{info?.desc}</div>
+      <div className="flex gap-4 text-[11px] font-mono text-zinc-500 border-t border-zinc-800/50 pt-2">
+        <span className="flex items-baseline gap-1">
+          <span className="text-[9px] uppercase tracking-wider opacity-60 font-sans">dec</span>
+          <span className="text-zinc-300">{num}</span>
+        </span>
+        <span className="flex items-baseline gap-1">
+          <span className="text-[9px] uppercase tracking-wider opacity-60 font-sans">signed</span>
+          <span className="text-zinc-300">{toSigned16(num)}</span>
+        </span>
       </div>
     </div>
   );
 }
 
-export function RegisterPanel({ regs, className = '', expanded = false, onExpand }: Props) {
-  const prevRef = useRef<Regs | null>(null);
-  const prev = prevRef.current ?? regs;
-  prevRef.current = regs;
-
+export function RegisterPanel({ regs, prev, className = '', expanded = false, onExpand }: Props) {
   const pairs: [string, keyof Regs][] = [
     ['AX', 'ax'], ['BX', 'bx'], ['CX', 'cx'], ['DX', 'dx'],
     ['CS', 'cs'], ['DS', 'ds'], ['ES', 'es'], ['SS', 'ss'],
@@ -89,9 +101,9 @@ export function RegisterPanel({ regs, className = '', expanded = false, onExpand
 
   if (expanded) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-zinc-950">
         {pairs.map(([label, key]) => (
-          <RegCardExpanded key={label} label={label} value={regs[key]} prev={prev[key]} />
+          <RegCardExpanded key={label} label={label} value={regs[key]} prev={prev?.[key]} />
         ))}
       </div>
     );
@@ -109,7 +121,7 @@ export function RegisterPanel({ regs, className = '', expanded = false, onExpand
       </div>
       <div className="grid grid-cols-4 p-0.5">
         {pairs.map(([label, key]) => (
-          <RegCell key={label} label={label} value={regs[key]} prev={prev[key]} />
+          <RegCell key={label} label={label} value={regs[key]} prev={prev?.[key]} />
         ))}
       </div>
     </div>

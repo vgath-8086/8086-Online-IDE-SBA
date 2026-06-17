@@ -67,6 +67,18 @@ function withAsmExt(name: string): string {
   return /\.\w+$/.test(name) ? name : `${name}.asm`;
 }
 
+/** Formats the internal numeric RegState into the string-based Regs object used by the UI. */
+function formatRegState(st: any) {
+  if (!st) return undefined;
+  const hex = (n: number) => n.toString(16).toUpperCase().padStart(4, '0');
+  return {
+    ax: hex(st.ax), bx: hex(st.bx), cx: hex(st.cx), dx: hex(st.dx),
+    cs: hex(st.cs), ds: hex(st.ds), es: hex(st.es), ss: hex(st.ss),
+    sp: hex(st.sp), bp: hex(st.bp), si: hex(st.si), di: hex(st.di),
+    ip: hex(st.ip), flags: hex(st.flags),
+  };
+}
+
 export default function IdePage() {
   const [vfs] = useState(() => new IndexedDbVfs());
   const [files, setFiles] = useState<VfsFileMeta[]>([]);
@@ -247,6 +259,7 @@ export default function IdePage() {
 
   const { tick, refresh } = useEmulatorLoop(controller);
   const regs = useRegisters(controller, tick);
+  const prevRegs = controller && mode !== 'edit' ? formatRegState(controller.getRegStateAt((controller.t || 0) - 1)) : undefined;
   const consoleState = useConsoleOutput(controller, tick);
   const { currentLineIdx } = useSourceHighlight(finalView, regs.ipNum);
 
@@ -448,8 +461,8 @@ export default function IdePage() {
             {editorSection}
           </div>
           <div className={mobileView === 'debug' ? 'flex flex-col h-full min-h-0' : 'hidden'}>
-            <RegisterPanel regs={regs} className="flex-shrink-0" onExpand={() => setExpandedPanel('registers')} />
-            <FlagsPanel flagsHex={regs.flags} onExpand={() => setExpandedPanel('flags')} />
+            <RegisterPanel regs={regs} prev={prevRegs} className="flex-shrink-0" onExpand={() => setExpandedPanel('registers')} />
+            <FlagsPanel flagsHex={regs.flags} prevFlagsHex={prevRegs?.flags} onExpand={() => setExpandedPanel('flags')} />
             <Tabs defaultValue="console" className="flex-1 min-h-0 flex flex-col">
               <TabsList className="h-10 rounded-none border-b border-zinc-800 bg-zinc-900 justify-start px-2 flex-shrink-0 overflow-x-auto">
                 <TabsTrigger value="console" className="text-xs h-8 px-3">Console</TabsTrigger>
@@ -494,6 +507,7 @@ export default function IdePage() {
             {/* Registers */}
             <RegisterPanel
               regs={regs}
+              prev={prevRegs}
               className="flex-shrink-0"
               onExpand={() => setExpandedPanel('registers')}
             />
@@ -501,6 +515,7 @@ export default function IdePage() {
             {/* Flags */}
             <FlagsPanel
               flagsHex={regs.flags}
+              prevFlagsHex={prevRegs?.flags}
               onExpand={() => setExpandedPanel('flags')}
             />
 
@@ -574,7 +589,7 @@ export default function IdePage() {
           description="Live snapshot of all 14 8086 registers, refreshed after every step. A yellow card shows a register that just changed."
           onClose={closeModal}
         >
-          <RegisterPanel regs={regs} expanded />
+          <RegisterPanel regs={regs} prev={prevRegs} expanded />
         </PanelModal>
       )}
       {expandedPanel === 'flags' && (
@@ -583,7 +598,7 @@ export default function IdePage() {
           description="Status bits set automatically by arithmetic and logic operations. Conditional jumps (JE, JG, JC...) branch based on these."
           onClose={closeModal}
         >
-          <FlagsPanel flagsHex={regs.flags} expanded />
+          <FlagsPanel flagsHex={regs.flags} prevFlagsHex={prevRegs?.flags} expanded />
         </PanelModal>
       )}
       {expandedPanel === 'console' && (
